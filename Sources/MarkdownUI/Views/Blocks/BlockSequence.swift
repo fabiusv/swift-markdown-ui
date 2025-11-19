@@ -26,6 +26,7 @@ where
     VStack(alignment: self.textAlignment.alignment.horizontal, spacing: 0) {
       ForEach(self.data, id: \.self) { element in
         self.content(element.index, element.value)
+          .id(element.index)
           .onPreferenceChange(BlockMarginsPreference.self) { value in
             self.blockMargins[element.hashValue] = value
           }

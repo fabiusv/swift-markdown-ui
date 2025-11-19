@@ -10,6 +10,7 @@ Display and customize Markdown text in SwiftUI.
 * [Getting started](#getting-started)
   * [Creating a Markdown view](#creating-a-markdown-view)
   * [Styling Markdown](#styling-markdown)
+  * [Searching Markdown and scrolling to results](#searching-markdown-and-scrolling-to-results)
 * [Documentation](#documentation)
   * [Related content](#related-content)
 * [Demo](#demo)
@@ -237,6 +238,62 @@ extension Theme {
         .markdownMargin(top: .em(0.25))
     }
     // More block styles...
+}
+```
+
+### Searching Markdown and scrolling to results
+
+Use `MarkdownContent.search(_:options:locale:)` to build search experiences without reparsing your
+Markdown. The method returns an array of ``MarkdownSearchResult`` values, each containing the
+matching snippet and the index of the block that contains the hit. You can pass
+``MarkdownSearchResult/scrollID`` to `ScrollViewProxy.scrollTo(_:)` to jump directly to the block
+inside a `ScrollViewReader`.
+
+The following example wires a text field and a list of matches to a Markdown view. Tapping a search
+result scrolls the view to the corresponding block.
+
+```swift
+struct MarkdownSearchView: View {
+  @State private var query = ""
+  @State private var selectedResult: MarkdownSearchResult?
+
+  let content: MarkdownContent
+
+  private var matches: [MarkdownSearchResult] {
+    self.content.search(self.query)
+  }
+
+  var body: some View {
+    VStack {
+      TextField("Search", text: self.$query)
+        .textFieldStyle(.roundedBorder)
+
+      ScrollViewReader { proxy in
+        ScrollView {
+          Markdown(self.content)
+        }
+        .onChange(of: self.selectedResult) { result in
+          if let result {
+            proxy.scrollTo(result.scrollID, anchor: .top)
+          }
+        }
+      }
+
+      List(self.matches) { result in
+        Button {
+          self.selectedResult = result
+        } label: {
+          VStack(alignment: .leading) {
+            Text(result.matchedText)
+              .font(.headline)
+            Text(result.snippet)
+              .foregroundColor(.secondary)
+          }
+        }
+      }
+    }
+    .padding()
+  }
 }
 ```
 
