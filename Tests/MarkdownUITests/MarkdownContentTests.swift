@@ -423,4 +423,52 @@ final class MarkdownContentTests: XCTestCase {
     )
     XCTAssertEqual(markdown, content.renderMarkdown())
   }
+
+  func testSearchReturnsResultsPerBlock() {
+    // given
+    let content = MarkdownContent(
+      """
+      # Heading
+
+      This paragraph talks about ScrollViewReader.
+
+      Another paragraph mentions scrolling helpers.
+      """
+    )
+
+    // when
+    let results = content.search("paragraph")
+
+    // then
+    XCTAssertEqual(results.count, 2)
+    XCTAssertEqual(results.map(\.blockIndex), [1, 2])
+    XCTAssertEqual(results.map(\.matchedText), ["paragraph", "paragraph"])
+  }
+
+  func testSearchTrimsWhitespaceOnlyQueries() {
+    // given
+    let content = MarkdownContent("""
+    Hello world
+    """)
+
+    // when
+    let results = content.search("   ")
+
+    // then
+    XCTAssertTrue(results.isEmpty)
+  }
+
+  func testSearchProducesSnippetWithEllipsisWhenNeeded() {
+    // given
+    let content = MarkdownContent("""
+    This paragraph contains a fairly long sentence used for testing search snippets.
+    """)
+
+    // when
+    let results = content.search("long sentence", options: [])
+
+    // then
+    XCTAssertEqual(results.count, 1)
+    XCTAssertTrue(results[0].snippet.contains("…"))
+  }
 }
